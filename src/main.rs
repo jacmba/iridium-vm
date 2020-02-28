@@ -1,3 +1,4 @@
+pub mod vm;
+
 fn main() {
-    println!("Hello, Iridium!");
 }
