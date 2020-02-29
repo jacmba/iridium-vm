@@ -16,6 +16,15 @@ impl Instruction {
   }
 }
 
+impl From<u8> for Opcode {
+    fn from(v: u8) -> Self {
+      match v {
+          0 => Opcode::HLT,
+          _ => Opcode::IGL,
+      }
+    }
+}
+
 //------------------------------------------------------------------------------
 
 #[cfg(test)]
@@ -24,6 +33,13 @@ mod tests {
 
   #[test]
   fn test_create_hlt() {
-      let opCode = Opcode::HLT;
+      let opcode = Opcode::HLT;
+      assert_eq!(opcode, Opcode::HLT);
+  }
+
+  #[test]
+  fn test_create_instruction() {
+      let instruction = Instruction::new(Opcode::HLT);
+      assert_eq!(instruction.opcode, Opcode::HLT);
   }
 }
