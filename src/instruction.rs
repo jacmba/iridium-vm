@@ -1,7 +1,12 @@
 #[derive(Debug, PartialEq)]
 pub enum Opcode {
   HLT,
-  IGL
+  IGL,
+  LOAD,
+  ADD,
+  SUB,
+  MUL,
+  DIV
 }
 
 pub struct Instruction {
@@ -20,6 +25,11 @@ impl From<u8> for Opcode {
     fn from(v: u8) -> Self {
       match v {
           0 => Opcode::HLT,
+          1 => Opcode::LOAD,
+          2 => Opcode::ADD,
+          3 => Opcode::SUB,
+          4 => Opcode::MUL,
+          5 => Opcode::DIV,
           _ => Opcode::IGL,
       }
     }
