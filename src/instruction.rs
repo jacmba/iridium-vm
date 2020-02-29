@@ -1,12 +1,15 @@
 #[derive(Debug, PartialEq)]
 pub enum Opcode {
   HLT,
-  IGL,
   LOAD,
   ADD,
   SUB,
   MUL,
-  DIV
+  DIV,
+  JMP,
+  JMPF,
+  JMPB,
+  IGL
 }
 
 pub struct Instruction {
@@ -30,6 +33,9 @@ impl From<u8> for Opcode {
           3 => Opcode::SUB,
           4 => Opcode::MUL,
           5 => Opcode::DIV,
+          6 => Opcode::JMP,
+          7 => Opcode::JMPF,
+          8 => Opcode::JMPB,
           _ => Opcode::IGL,
       }
     }
