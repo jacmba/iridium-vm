@@ -50,6 +50,11 @@ impl REPL {
             println!("Listing contents of VM registers");
             println!("{:?}", self.vm.get_registers());
             println!("End of registers listing");
+          },
+          ".dump" => {
+            println!("---- Printing VM dump ----");
+            print!("{:?}", self.vm);
+            println!("---- End printing VM dump");
           }
           _ => {
             let results = self.parse_hex(buffer);

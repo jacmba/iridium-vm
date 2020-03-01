@@ -1,5 +1,6 @@
 use crate::instruction::Opcode;
 
+#[derive(Debug)]
 pub struct VM {
   registers: [i32; 32],
   pc: usize,
@@ -24,7 +25,11 @@ impl VM {
   }
 
   pub fn get_registers(&self) -> &[i32] {
-    return &self.registers
+    &self.registers
+  }
+
+  pub fn get_pc(&self) -> usize {
+    self.pc 
   }
 
   pub fn add_byte(&mut self, byte: u8) {
