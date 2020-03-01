@@ -19,6 +19,18 @@ impl VM {
     }
   }
 
+  pub fn get_program(&self) -> &Vec<u8> {
+    return &self.program;
+  }
+
+  pub fn get_registers(&self) -> &[i32] {
+    return &self.registers
+  }
+
+  pub fn add_byte(&mut self, byte: u8) {
+    self.program.push(byte);
+  }
+
   pub fn run(&mut self) {
     let mut running = true;
     while running {
