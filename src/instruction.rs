@@ -1,3 +1,5 @@
+use nom::types::CompleteStr;
+
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Opcode {
   HLT,
@@ -21,6 +23,30 @@ pub enum Opcode {
 
 pub struct Instruction {
   opcode: Opcode,
+}
+
+impl<'a> From<CompleteStr<'a>> for Opcode {
+  fn from(v: CompleteStr<'a>) -> Self {
+    match v {
+      CompleteStr("hlt") => Opcode::HLT,
+      CompleteStr("ld") => Opcode::LOAD,
+      CompleteStr("add") => Opcode::ADD,
+      CompleteStr("sub") => Opcode::SUB,
+      CompleteStr("mul") => Opcode::MUL,
+      CompleteStr("div") => Opcode::DIV,
+      CompleteStr("jmp") => Opcode::JMP,
+      CompleteStr("jmpf") => Opcode::JMPF,
+      CompleteStr("jmpb") => Opcode::JMPB,
+      CompleteStr("eq") => Opcode::EQ,
+      CompleteStr("neq") => Opcode::NEQ,
+      CompleteStr("gt") => Opcode::GT,
+      CompleteStr("lt") => Opcode::LT,
+      CompleteStr("gte") => Opcode::GTE,
+      CompleteStr("lte") => Opcode::LTE,
+      CompleteStr("jeq") => Opcode::JEQ,
+      _ => Opcode::IGL,
+    }
+  }
 }
 
 impl Instruction {
@@ -69,5 +95,23 @@ mod tests {
   fn test_create_instruction() {
     let instruction = Instruction::new(Opcode::HLT);
     assert_eq!(instruction.opcode, Opcode::HLT);
+  }
+
+  #[test]
+  fn test_create_hlt_opcode_from_string() {
+    let op = Opcode::from(CompleteStr("hlt"));
+    assert_eq!(op, Opcode::HLT);
+  }
+
+  #[test]
+  fn test_logical_opcodes_from_string() {
+    let op = Opcode::from(CompleteStr("jmp"));
+    assert_eq!(op, Opcode::JMP);
+  }
+
+  #[test]
+  fn test_parse_invalid_opcode_from_string() {
+    let op = Opcode::from(CompleteStr("invalid one"));
+    assert_eq!(op, Opcode::IGL);
   }
 }

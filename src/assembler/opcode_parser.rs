@@ -1,16 +1,14 @@
 use crate::assembler::Token;
 use crate::instruction::Opcode;
+use nom::alpha1;
 use nom::types::CompleteStr;
 
-named!(pub opcode_halt<CompleteStr, Token>,
+named!(pub opcode<CompleteStr, Token>,
   do_parse!(
-    tag!("hlt") >> (Token::Op{code: Opcode::HLT})
-  )
-);
-
-named!(pub opcode_load<CompleteStr, Token>,
-  do_parse!(
-    tag!("ld") >> (Token::Op{code: Opcode::LOAD})
+    opcode: alpha1 >>
+    (
+      Token::Op{code: Opcode::from(opcode)}
+    )
   )
 );
 
@@ -21,7 +19,7 @@ mod tests {
 
   #[test]
   fn test_opcode_parse_load() {
-    let result = opcode_load(CompleteStr("ld"));
+    let result = opcode(CompleteStr("ld"));
     assert_eq!(result.is_ok(), true);
     let (rest, token) = result.unwrap();
     assert_eq!(token, Token::Op { code: Opcode::LOAD });
@@ -30,7 +28,7 @@ mod tests {
 
   #[test]
   fn test_opcode_parse_halt() {
-    let result = opcode_halt(CompleteStr("hlt"));
+    let result = opcode(CompleteStr("hlt"));
     assert!(result.is_ok());
     let (rest, token) = result.unwrap();
     assert_eq!(token, Token::Op { code: Opcode::HLT });
@@ -39,7 +37,8 @@ mod tests {
 
   #[test]
   fn test_invalid_opcode() {
-    let result = opcode_load(CompleteStr("invalid_thing"));
-    assert_eq!(result.is_ok(), false);
+    let result = opcode(CompleteStr("invalid_thing"));
+    let (_, token) = result.unwrap();
+    assert_eq!(token, Token::Op { code: Opcode::IGL });
   }
 }

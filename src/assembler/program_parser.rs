@@ -8,7 +8,7 @@ pub struct Program {
 
 named!(pub program<CompleteStr, Program>,
   do_parse!(
-    instructions: many1!(instruction_one) >>
+    instructions: many1!(instruction) >>
     (
       Program {
         instructions: instructions
@@ -50,5 +50,15 @@ mod tests {
     let bytes = prg.to_bytes();
     assert_eq!(bytes.len(), 4);
     assert_eq!(bytes, vec![1, 1, 0, 100]);
+  }
+
+  #[test]
+  fn test_program_with_logical_op_to_bytes() {
+    let result = program(CompleteStr("eq $0 $1"));
+    assert!(result.is_ok());
+    let (_, prg) = result.unwrap();
+    let bytes = prg.to_bytes();
+    assert_eq!(bytes.len(), 3);
+    assert_eq!(bytes, vec![9, 0, 1]);
   }
 }
