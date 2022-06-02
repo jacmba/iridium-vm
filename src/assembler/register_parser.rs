@@ -3,7 +3,7 @@ use nom::types::CompleteStr;
 
 use crate::assembler::Token;
 
-named!(register <CompleteStr, Token>,
+named!(pub register <CompleteStr, Token>,
   ws!(
     do_parse!(
       tag!("$") >>

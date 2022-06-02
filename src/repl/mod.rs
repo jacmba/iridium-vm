@@ -1,4 +1,6 @@
 use super::vm::VM;
+use crate::assembler::program_parser::*;
+use nom::types::CompleteStr;
 use std;
 use std::io;
 use std::io::Write;
@@ -29,9 +31,10 @@ impl REPL {
       stdin
         .read_line(&mut buffer)
         .expect("Unable to read line from user");
-      let buffer = buffer.trim();
-      self.command_buffer.push(String::from(buffer));
-      match buffer {
+      let buffer = buffer.trim().to_lowercase();
+      let input = String::from(&buffer);
+      self.command_buffer.push(buffer);
+      match input.as_str() {
         ".quit" => {
           println!("Bye! Have a nice day!");
           std::process::exit(0);
@@ -59,15 +62,24 @@ impl REPL {
           println!("---- End printing VM dump");
         }
         _ => {
-          let results = self.parse_hex(buffer);
-          match results {
-            Ok(bytes) => {
-              for byte in bytes {
-                self.vm.add_byte(byte);
+          let parsed_program = program(CompleteStr(&input));
+          if !parsed_program.is_ok() {
+            let results = self.parse_hex(&input);
+            match results {
+              Ok(bytes) => {
+                for byte in bytes {
+                  self.vm.add_byte(byte);
+                }
+              }
+              Err(_e) => {
+                println!("Unable to parse input");
               }
             }
-            Err(_e) => {
-              println!("Invalid HEX string: {:?}", _e)
+          } else {
+            let (_, result) = parsed_program.unwrap();
+            let bytecode = result.to_bytes();
+            for b in bytecode {
+              self.vm.add_byte(b);
             }
           }
 

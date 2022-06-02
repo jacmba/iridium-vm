@@ -3,7 +3,7 @@ use nom::types::CompleteStr;
 
 use crate::assembler::Token;
 
-named!(integer_operand<CompleteStr, Token>,
+named!(pub integer_operand<CompleteStr, Token>,
   ws!(
     do_parse!(
       tag!("#") >>
