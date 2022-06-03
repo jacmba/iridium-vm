@@ -237,4 +237,17 @@ mod tests {
     assert_eq!(res.len(), 3);
     assert_eq!(res, vec![9, 0, 1]);
   }
+
+  #[test]
+  fn test_mem_operation_with_one_register() {
+    let inst = AsmInstruction {
+      opcode: Token::Op { code: Opcode::ALOC },
+      operand1: Some(Token::Register { reg_num: 0 }),
+      operand2: None,
+      operand3: None,
+    };
+    let res = inst.to_bytes();
+    assert_eq!(res.len(), 2);
+    assert_eq!(res, vec![16, 0]);
+  }
 }
