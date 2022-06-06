@@ -69,7 +69,7 @@ impl VM {
 
   fn execute_instruction(&mut self) -> bool {
     if self.pc >= self.program.len() {
-      return false;
+      return true;
     }
 
     let opcode = self.decode_opcode();
@@ -77,7 +77,7 @@ impl VM {
       // Machine halting
       Opcode::HLT => {
         println!("HLT encountered");
-        return false;
+        return true;
       }
 
       // Register load
@@ -112,6 +112,14 @@ impl VM {
         let r3 = self.next_8_bits() as usize;
         self.registers[r3] = r1 / r2;
         self.reminder = (r1 % r2) as u32;
+      }
+      Opcode::INC => {
+        let r = self.next_8_bits() as usize;
+        self.registers[r] += 1;
+      }
+      Opcode::DEC => {
+        let r = self.next_8_bits() as usize;
+        self.registers[r] -= 1;
       }
 
       // Jumps
@@ -171,10 +179,10 @@ impl VM {
       // Invalid code
       _ => {
         println!("Unrecognized opcode [{:?}] found! Terminating...", opcode);
-        return false;
+        return true;
       }
     }
-    true
+    false
   }
 }
 
@@ -376,5 +384,23 @@ mod tests {
     vm.program = vec![16, 0, 0, 0];
     vm.run_once();
     assert_eq!(vm.heap.len(), 1024);
+  }
+
+  #[test]
+  fn test_opcode_inc() {
+    let mut vm = get_test_vm();
+    vm.registers[0] = 1;
+    vm.program = vec![17, 0];
+    vm.run_once();
+    assert_eq!(vm.registers[0], 2);
+  }
+
+  #[test]
+  fn test_opcode_dec() {
+    let mut vm = get_test_vm();
+    vm.registers[0] = 2;
+    vm.program = vec![18, 0];
+    vm.run_once();
+    assert_eq!(vm.registers[0], 1);
   }
 }

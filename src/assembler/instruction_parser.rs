@@ -11,6 +11,8 @@ pub struct AsmInstruction {
   operand1: Option<Token>,
   operand2: Option<Token>,
   operand3: Option<Token>,
+  label: Option<Token>,
+  directive: Option<Token>,
 }
 
 named!(instruction_one<CompleteStr, AsmInstruction>,
@@ -140,6 +142,10 @@ impl AsmInstruction {
       }
     }
 
+    while results.len() < 4 {
+      results.push(0);
+    }
+
     results
   }
 }
@@ -195,7 +201,7 @@ mod tests {
     };
 
     let res = inst.to_bytes();
-    assert_eq!(res.len(), 1);
+    assert_eq!(res.len(), 4);
     assert_eq!(res[0], 0);
   }
 
@@ -234,8 +240,8 @@ mod tests {
       operand3: None,
     };
     let res = inst.to_bytes();
-    assert_eq!(res.len(), 3);
-    assert_eq!(res, vec![9, 0, 1]);
+    assert_eq!(res.len(), 4);
+    assert_eq!(res, vec![9, 0, 1, 0]);
   }
 
   #[test]
@@ -247,7 +253,7 @@ mod tests {
       operand3: None,
     };
     let res = inst.to_bytes();
-    assert_eq!(res.len(), 2);
-    assert_eq!(res, vec![16, 0]);
+    assert_eq!(res.len(), 4);
+    assert_eq!(res, vec![16, 0, 0, 0]);
   }
 }

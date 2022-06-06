@@ -58,7 +58,7 @@ mod tests {
     assert!(result.is_ok());
     let (_, prg) = result.unwrap();
     let bytes = prg.to_bytes();
-    assert_eq!(bytes.len(), 3);
-    assert_eq!(bytes, vec![9, 0, 1]);
+    assert_eq!(bytes.len(), 4);
+    assert_eq!(bytes, vec![9, 0, 1, 0]);
   }
 }
