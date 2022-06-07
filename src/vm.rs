@@ -49,6 +49,11 @@ impl VM {
     self.execute_instruction();
   }
 
+  pub fn clear(&mut self) {
+    self.program = vec![];
+    self.pc = 0;
+  }
+
   fn next_8_bits(&mut self) -> u8 {
     let result = self.program[self.pc];
     self.pc += 1;
@@ -69,7 +74,7 @@ impl VM {
 
   fn execute_instruction(&mut self) -> bool {
     if self.pc >= self.program.len() {
-      return true;
+      return false;
     }
 
     let opcode = self.decode_opcode();
@@ -77,7 +82,7 @@ impl VM {
       // Machine halting
       Opcode::HLT => {
         println!("HLT encountered");
-        return true;
+        return false;
       }
 
       // Register load
@@ -179,10 +184,10 @@ impl VM {
       // Invalid code
       _ => {
         println!("Unrecognized opcode [{:?}] found! Terminating...", opcode);
-        return true;
+        return false;
       }
     }
-    false
+    true
   }
 }
 

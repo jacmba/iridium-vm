@@ -2,9 +2,12 @@ use super::vm::VM;
 use crate::assembler::program_parser::*;
 use nom::types::CompleteStr;
 use std;
+use std::fs::File;
 use std::io;
+use std::io::prelude::*;
 use std::io::Write;
 use std::num::ParseIntError;
+use std::path::Path;
 
 pub struct REPL {
   command_buffer: Vec<String>,
@@ -60,6 +63,34 @@ impl REPL {
           println!("---- Printing VM dump ----");
           print!("{:?}", self.vm);
           println!("---- End printing VM dump");
+        }
+        ".clear" => {
+          self.vm.clear();
+          println!("Program vector cleared");
+        }
+        ".load_file" => {
+          print!("Enter file path: ");
+          io::stdout()
+            .flush()
+            .expect("Could not flush standard output");
+          let mut tmp = String::new();
+          stdin
+            .read_line(&mut tmp)
+            .expect("Unable to read line from user");
+          let tmp = tmp.trim();
+          let filename = Path::new(tmp);
+          let mut f = File::open(Path::new(&filename)).expect("File not found");
+          let mut contents = String::new();
+          f.read_to_string(&mut contents).expect("Error reading file");
+          let program = match program(CompleteStr(&contents)) {
+            Ok((_, program)) => program,
+            Err(e) => {
+              println!("Unable to parse input: {:?}", e);
+              continue;
+            }
+          };
+          self.vm.program = program.to_bytes();
+          self.vm.run();
         }
         _ => {
           let parsed_program = program(CompleteStr(&input));
