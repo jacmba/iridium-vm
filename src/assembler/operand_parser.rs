@@ -1,3 +1,4 @@
+use super::register_parser::register;
 use nom::digit;
 use nom::types::CompleteStr;
 
@@ -12,6 +13,13 @@ named!(pub integer_operand<CompleteStr, Token>,
         Token::IntegerOperand {value: reg_num.parse::<i32>().unwrap()}
       )
     )
+  )
+);
+
+named!(pub operand<CompleteStr, Token>,
+  alt!(
+    integer_operand |
+    register
   )
 );
 

@@ -1,13 +1,15 @@
-use crate::assembler::opcode_parser::*;
-use crate::assembler::operand_parser::integer_operand;
-use crate::assembler::register_parser::register;
-use crate::assembler::Token;
+use super::directive_parser::directive;
+use super::label_parser::*;
+use super::opcode_parser::*;
+use super::operand_parser::*;
+use super::register_parser::register;
+use super::Token;
 use nom::multispace;
 use nom::types::CompleteStr;
 
 #[derive(Debug, PartialEq)]
 pub struct AsmInstruction {
-  opcode: Token,
+  opcode: Option<Token>,
   operand1: Option<Token>,
   operand2: Option<Token>,
   operand3: Option<Token>,
@@ -15,96 +17,54 @@ pub struct AsmInstruction {
   directive: Option<Token>,
 }
 
-named!(instruction_one<CompleteStr, AsmInstruction>,
-  do_parse!(
-    o: opcode >>
-    r: register >>
-    i: integer_operand >>
-    (
-      AsmInstruction {
-        opcode: o,
-        operand1: Some(r),
-        operand2: Some(i),
-        operand3: None
-      }
-    )
-  )
-);
-
-named!(instruction_two<CompleteStr, AsmInstruction>,
-  do_parse!(
-    o: opcode >>
-    r1: register >>
-    r2: register >>
-    r3: register >>
-    (
-      AsmInstruction {
-        opcode: o,
-        operand1: Some(r1),
-        operand2: Some(r2),
-        operand3: Some(r3)
-      }
-    )
-  )
-);
-
-named!(instruction_three<CompleteStr, AsmInstruction>,
-  do_parse!(
-    o: opcode >>
-    r1: register >>
-    r2: register >>
-    (
-      AsmInstruction {
-        opcode: o,
-        operand1: Some(r1),
-        operand2: Some(r2),
-        operand3: None
-      }
-    )
-  )
-);
-
-named!(instruction_four<CompleteStr, AsmInstruction>,
-  do_parse!(
-    o: opcode >>
-    r: register >>
-    (
-      AsmInstruction {
-        opcode: o,
-        operand1: Some(r),
-        operand2: None,
-        operand3: None
-      }
-    )
-  )
-);
-
-named!(instruction_five<CompleteStr, AsmInstruction>,
-  do_parse!(
-    o: opcode >>
-    opt!(multispace) >>
-    (
-      AsmInstruction {
-        opcode: o,
-        operand1: None,
-        operand2: None,
-        operand3: None
-      }
-    )
-  )
-);
-
 named!(pub instruction<CompleteStr, AsmInstruction>,
   do_parse!(
-    ins: alt!(instruction_one | instruction_two |
-      instruction_three | instruction_four | instruction_five) >>
+    ins: alt!(instruction_combined | directive) >>
     (
       ins
     )
   )
 );
 
+named!(pub instruction_combined<CompleteStr, AsmInstruction>,
+  do_parse!(
+    l: opt!(label_declaration) >>
+    o: opcode >>
+    o1: opt!(operand) >>
+    o2: opt!(operand) >>
+    o3: opt!(operand) >>
+    (
+      AsmInstruction{
+        opcode: Some(o),
+        label: l,
+        directive: None,
+        operand1: o1,
+        operand2: o2,
+        operand3: o3,
+      }
+    )
+  )
+);
+
 impl AsmInstruction {
+  pub fn new(
+    directive: Option<Token>,
+    label: Option<Token>,
+    opcode: Option<Token>,
+    operand1: Option<Token>,
+    operand2: Option<Token>,
+    operand3: Option<Token>,
+  ) -> AsmInstruction {
+    AsmInstruction {
+      directive: directive,
+      label: label,
+      opcode: opcode,
+      operand1: operand1,
+      operand2: operand2,
+      operand3: operand3,
+    }
+  }
+
   pub fn extract_operand(t: &Token, results: &mut Vec<u8>) {
     match t {
       Token::Register { reg_num } => {
@@ -127,13 +87,16 @@ impl AsmInstruction {
   pub fn to_bytes(&self) -> Vec<u8> {
     let mut results: Vec<u8> = vec![];
     match &self.opcode {
-      Token::Op { code } => {
-        results.push(*code as u8);
-      }
-      _ => {
-        println!("Non-opcode found in opcode field");
-        std::process::exit(1);
-      }
+      Some(t) => match t {
+        Token::Op { code } => {
+          results.push(*code as u8);
+        }
+        _ => {
+          println!("Non-opcode found in opcode field");
+          std::process::exit(1);
+        }
+      },
+      None => (),
     };
 
     for operand in &[&self.operand1, &self.operand2, &self.operand3] {
@@ -157,16 +120,18 @@ mod tests {
 
   #[test]
   fn test_parse_instruction_form_one() {
-    let result = instruction_one(CompleteStr("ld $0 #100"));
+    let result = instruction(CompleteStr("ld $0 #100"));
     assert_eq!(
       result,
       Ok((
         CompleteStr(""),
         AsmInstruction {
-          opcode: Token::Op { code: Opcode::LOAD },
+          opcode: Some(Token::Op { code: Opcode::LOAD }),
           operand1: Some(Token::Register { reg_num: 0 }),
           operand2: Some(Token::IntegerOperand { value: 100 }),
-          operand3: None
+          operand3: None,
+          label: None,
+          directive: None
         }
       ))
     );
@@ -194,10 +159,12 @@ mod tests {
   #[test]
   fn test_halt_function_single_opcode_byte() {
     let inst = AsmInstruction {
-      opcode: Token::Op { code: Opcode::HLT },
+      opcode: Some(Token::Op { code: Opcode::HLT }),
       operand1: None,
       operand2: None,
       operand3: None,
+      label: None,
+      directive: None,
     };
 
     let res = inst.to_bytes();
@@ -208,10 +175,12 @@ mod tests {
   #[test]
   fn test_load_with_operands() {
     let inst = AsmInstruction {
-      opcode: Token::Op { code: Opcode::LOAD },
+      opcode: Some(Token::Op { code: Opcode::LOAD }),
       operand1: Some(Token::Register { reg_num: 0 }),
       operand2: Some(Token::IntegerOperand { value: 50 }),
       operand3: None,
+      label: None,
+      directive: None,
     };
     let res = inst.to_bytes();
     assert_eq!(res.len(), 4);
@@ -221,10 +190,12 @@ mod tests {
   #[test]
   fn test_add_with_all_registers() {
     let inst = AsmInstruction {
-      opcode: Token::Op { code: Opcode::ADD },
+      opcode: Some(Token::Op { code: Opcode::ADD }),
       operand1: Some(Token::Register { reg_num: 0 }),
       operand2: Some(Token::Register { reg_num: 1 }),
       operand3: Some(Token::Register { reg_num: 2 }),
+      label: None,
+      directive: None,
     };
     let res = inst.to_bytes();
     assert_eq!(res.len(), 4);
@@ -234,10 +205,12 @@ mod tests {
   #[test]
   fn test_logical_operation_with_two_registers() {
     let inst = AsmInstruction {
-      opcode: Token::Op { code: Opcode::EQ },
+      opcode: Some(Token::Op { code: Opcode::EQ }),
       operand1: Some(Token::Register { reg_num: 0 }),
       operand2: Some(Token::Register { reg_num: 1 }),
       operand3: None,
+      label: None,
+      directive: None,
     };
     let res = inst.to_bytes();
     assert_eq!(res.len(), 4);
@@ -247,10 +220,12 @@ mod tests {
   #[test]
   fn test_mem_operation_with_one_register() {
     let inst = AsmInstruction {
-      opcode: Token::Op { code: Opcode::ALOC },
+      opcode: Some(Token::Op { code: Opcode::ALOC }),
       operand1: Some(Token::Register { reg_num: 0 }),
       operand2: None,
       operand3: None,
+      label: None,
+      directive: None,
     };
     let res = inst.to_bytes();
     assert_eq!(res.len(), 4);
