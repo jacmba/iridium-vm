@@ -1,9 +1,10 @@
-use crate::assembler::instruction_parser::*;
+use super::instruction_parser::*;
+use super::SymbolTable;
 use nom::types::CompleteStr;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-  instructions: Vec<AsmInstruction>,
+  pub instructions: Vec<AsmInstruction>,
 }
 
 named!(pub program<CompleteStr, Program>,
@@ -18,11 +19,11 @@ named!(pub program<CompleteStr, Program>,
 );
 
 impl Program {
-  pub fn to_bytes(&self) -> Vec<u8> {
+  pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
     let mut program: Vec<u8> = vec![];
 
     for inst in &self.instructions {
-      program.append(&mut inst.to_bytes());
+      program.append(&mut inst.to_bytes(symbols));
     }
 
     program
@@ -47,7 +48,8 @@ mod tests {
     let result = program(CompleteStr("ld $1 #100"));
     assert!(result.is_ok());
     let (_, prg) = result.unwrap();
-    let bytes = prg.to_bytes();
+    let symbols = SymbolTable::new();
+    let bytes = prg.to_bytes(&symbols);
     assert_eq!(bytes.len(), 4);
     assert_eq!(bytes, vec![1, 1, 0, 100]);
   }
@@ -57,7 +59,8 @@ mod tests {
     let result = program(CompleteStr("eq $0 $1"));
     assert!(result.is_ok());
     let (_, prg) = result.unwrap();
-    let bytes = prg.to_bytes();
+    let symbols = SymbolTable::new();
+    let bytes = prg.to_bytes(&symbols);
     assert_eq!(bytes.len(), 4);
     assert_eq!(bytes, vec![9, 0, 1, 0]);
   }

@@ -1,5 +1,6 @@
+use super::assembler::program_parser::*;
+use super::assembler::*;
 use super::vm::VM;
-use crate::assembler::program_parser::*;
 use nom::types::CompleteStr;
 use std;
 use std::fs::File;
@@ -12,6 +13,7 @@ use std::path::Path;
 pub struct REPL {
   command_buffer: Vec<String>,
   vm: VM,
+  asm: Assembler,
 }
 
 impl REPL {
@@ -19,6 +21,7 @@ impl REPL {
     REPL {
       vm: VM::new(),
       command_buffer: vec![],
+      asm: Assembler::new(),
     }
   }
 
@@ -89,7 +92,7 @@ impl REPL {
               continue;
             }
           };
-          self.vm.program = program.to_bytes();
+          self.vm.program = program.to_bytes(&self.asm.symbols);
           self.vm.run();
         }
         _ => {
@@ -108,7 +111,7 @@ impl REPL {
             }
           } else {
             let (_, result) = parsed_program.unwrap();
-            let bytecode = result.to_bytes();
+            let bytecode = result.to_bytes(&self.asm.symbols);
             for b in bytecode {
               self.vm.add_byte(b);
             }

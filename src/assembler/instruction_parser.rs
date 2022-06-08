@@ -3,7 +3,7 @@ use super::label_parser::*;
 use super::opcode_parser::*;
 use super::operand_parser::*;
 use super::register_parser::register;
-use super::Token;
+use super::*;
 use nom::multispace;
 use nom::types::CompleteStr;
 
@@ -65,7 +65,7 @@ impl AsmInstruction {
     }
   }
 
-  pub fn extract_operand(t: &Token, results: &mut Vec<u8>) {
+  pub fn extract_operand(t: &Token, results: &mut Vec<u8>, symbols: &SymbolTable) {
     match t {
       Token::Register { reg_num } => {
         results.push(*reg_num);
@@ -77,6 +77,15 @@ impl AsmInstruction {
         results.push(byte2 as u8);
         results.push(byte1 as u8);
       }
+      Token::LabelUsage { name } => {
+        if let Some(value) = symbols.symbol_value(name) {
+          let converted = value as u16;
+          let byte1 = converted;
+          let byte2 = converted >> 8;
+          results.push(byte2 as u8);
+          results.push(byte1 as u8);
+        }
+      }
       _ => {
         println!("Opcode found in operand field");
         std::process::exit(1);
@@ -84,7 +93,7 @@ impl AsmInstruction {
     };
   }
 
-  pub fn to_bytes(&self) -> Vec<u8> {
+  pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
     let mut results: Vec<u8> = vec![];
     match &self.opcode {
       Some(t) => match t {
@@ -101,7 +110,7 @@ impl AsmInstruction {
 
     for operand in &[&self.operand1, &self.operand2, &self.operand3] {
       if let Some(t) = operand {
-        AsmInstruction::extract_operand(&t, &mut results)
+        AsmInstruction::extract_operand(&t, &mut results, symbols)
       }
     }
 
@@ -110,6 +119,20 @@ impl AsmInstruction {
     }
 
     results
+  }
+
+  pub fn is_label(&self) -> bool {
+    self.label.is_some()
+  }
+
+  pub fn label_name(&self) -> Option<String> {
+    match &self.label {
+      Some(t) => match t {
+        Token::LabelDeclaration { name } => Some(name.to_string()),
+        _ => None,
+      },
+      None => None,
+    }
   }
 }
 
@@ -141,7 +164,8 @@ mod tests {
   fn test_extract_register_operand() {
     let tok = Token::Register { reg_num: 5 };
     let mut v: Vec<u8> = vec![];
-    AsmInstruction::extract_operand(&tok, &mut v);
+    let symbols = SymbolTable::new();
+    AsmInstruction::extract_operand(&tok, &mut v, &symbols);
     assert_eq!(v.len(), 1);
     assert_eq!(v[0], 5);
   }
@@ -150,7 +174,8 @@ mod tests {
   fn test_extract_integer_operand() {
     let tok = Token::IntegerOperand { value: 255 };
     let mut v: Vec<u8> = vec![];
-    AsmInstruction::extract_operand(&tok, &mut v);
+    let symbols = SymbolTable::new();
+    AsmInstruction::extract_operand(&tok, &mut v, &symbols);
     assert_eq!(v.len(), 2);
     assert_eq!(v[0], 0);
     assert_eq!(v[1], 255);
@@ -167,7 +192,8 @@ mod tests {
       directive: None,
     };
 
-    let res = inst.to_bytes();
+    let symbols = SymbolTable::new();
+    let res = inst.to_bytes(&symbols);
     assert_eq!(res.len(), 4);
     assert_eq!(res[0], 0);
   }
@@ -182,7 +208,8 @@ mod tests {
       label: None,
       directive: None,
     };
-    let res = inst.to_bytes();
+    let symbols = SymbolTable::new();
+    let res = inst.to_bytes(&symbols);
     assert_eq!(res.len(), 4);
     assert_eq!(res, vec![1, 0, 0, 50]);
   }
@@ -197,7 +224,8 @@ mod tests {
       label: None,
       directive: None,
     };
-    let res = inst.to_bytes();
+    let symbols = SymbolTable::new();
+    let res = inst.to_bytes(&symbols);
     assert_eq!(res.len(), 4);
     assert_eq!(res, vec![2, 0, 1, 2]);
   }
@@ -212,7 +240,8 @@ mod tests {
       label: None,
       directive: None,
     };
-    let res = inst.to_bytes();
+    let symbols = SymbolTable::new();
+    let res = inst.to_bytes(&symbols);
     assert_eq!(res.len(), 4);
     assert_eq!(res, vec![9, 0, 1, 0]);
   }
@@ -227,7 +256,8 @@ mod tests {
       label: None,
       directive: None,
     };
-    let res = inst.to_bytes();
+    let symbols = SymbolTable::new();
+    let res = inst.to_bytes(&symbols);
     assert_eq!(res.len(), 4);
     assert_eq!(res, vec![16, 0, 0, 0]);
   }
