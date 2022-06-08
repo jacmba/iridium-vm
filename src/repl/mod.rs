@@ -67,6 +67,11 @@ impl REPL {
           print!("{:?}", self.vm);
           println!("---- End printing VM dump");
         }
+        ".symbols" => {
+          println!("---- Printing symbols table ----");
+          println!("{:?}", self.asm.symbols);
+          println!("---- End printing symbols table ----");
+        }
         ".clear" => {
           self.vm.clear();
           println!("Program vector cleared");

@@ -1,0 +1,9 @@
+name: iridium
+version: "0.0.1"
+author: Jacinto Mba Cantero
+about: Interpreter for Iridium VM
+args:
+  - INPUT_FILE:
+      help: Path to the assembler source file to run
+      required: false
+      index: 1
