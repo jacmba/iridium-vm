@@ -121,10 +121,12 @@ impl VM {
       Opcode::INC => {
         let r = self.next_8_bits() as usize;
         self.registers[r] += 1;
+        self.pc += 2;
       }
       Opcode::DEC => {
         let r = self.next_8_bits() as usize;
         self.registers[r] -= 1;
+        self.pc += 2;
       }
 
       // Jumps
@@ -143,34 +145,44 @@ impl VM {
         let l = self.registers[self.next_8_bits() as usize];
         let r = self.registers[self.next_8_bits() as usize];
         self.equal_flag = l == r;
+        self.pc += 1;
       }
       Opcode::NEQ => {
         let l = self.registers[self.next_8_bits() as usize];
         let r = self.registers[self.next_8_bits() as usize];
         self.equal_flag = l != r;
+        self.pc += 1;
       }
       Opcode::GT => {
         let l = self.registers[self.next_8_bits() as usize];
         let r = self.registers[self.next_8_bits() as usize];
         self.equal_flag = l > r;
+        self.pc += 1;
       }
       Opcode::LT => {
         let l = self.registers[self.next_8_bits() as usize];
         let r = self.registers[self.next_8_bits() as usize];
         self.equal_flag = l < r;
+        self.pc += 1;
       }
       Opcode::GTE => {
         let l = self.registers[self.next_8_bits() as usize];
         let r = self.registers[self.next_8_bits() as usize];
         self.equal_flag = l >= r;
+        self.pc += 1;
       }
       Opcode::LTE => {
         let l = self.registers[self.next_8_bits() as usize];
         let r = self.registers[self.next_8_bits() as usize];
         self.equal_flag = l <= r;
+        self.pc += 1;
       }
       Opcode::JEQ => {
-        self.pc = self.registers[self.next_8_bits() as usize] as usize;
+        if self.equal_flag {
+          self.pc = self.registers[self.next_8_bits() as usize] as usize;
+        } else {
+          self.pc += 3;
+        }
       }
 
       // Memory
@@ -179,6 +191,7 @@ impl VM {
         let bytes = self.registers[reg];
         let new_end = self.heap.len() as i32 + bytes;
         self.heap.resize(new_end as usize, 0);
+        self.pc += 2;
       }
 
       // Invalid code
@@ -291,7 +304,7 @@ mod tests {
   #[test]
   fn test_opcode_eq() {
     let mut vm = get_test_vm();
-    vm.program = vec![9, 0, 1, 9, 0, 2];
+    vm.program = vec![9, 0, 1, 0, 9, 0, 2];
     vm.registers[0] = 5;
     vm.registers[1] = 5;
     vm.registers[2] = 7;
@@ -304,7 +317,7 @@ mod tests {
   #[test]
   fn test_opcode_neq() {
     let mut vm = get_test_vm();
-    vm.program = vec![10, 0, 1, 10, 0, 2];
+    vm.program = vec![10, 0, 1, 0, 10, 0, 2];
     vm.registers[0] = 3;
     vm.registers[1] = 4;
     vm.registers[2] = 3;
@@ -317,7 +330,7 @@ mod tests {
   #[test]
   fn test_opcode_gt() {
     let mut vm = get_test_vm();
-    vm.program = vec![11, 0, 1, 11, 0, 2];
+    vm.program = vec![11, 0, 1, 0, 11, 0, 2];
     vm.registers[0] = 2;
     vm.registers[1] = 1;
     vm.registers[2] = 2;
@@ -330,7 +343,7 @@ mod tests {
   #[test]
   fn test_opcode_lt() {
     let mut vm = get_test_vm();
-    vm.program = vec![12, 0, 1, 12, 0, 2];
+    vm.program = vec![12, 0, 1, 0, 12, 0, 2];
     vm.registers[0] = 5;
     vm.registers[1] = 10;
     vm.registers[2] = 5;
@@ -343,7 +356,7 @@ mod tests {
   #[test]
   fn test_opcode_gte() {
     let mut vm = get_test_vm();
-    vm.program = vec![13, 0, 1, 13, 0, 2, 13, 0, 3];
+    vm.program = vec![13, 0, 1, 0, 13, 0, 2, 0, 13, 0, 3, 0];
     vm.registers[0] = 4;
     vm.registers[1] = 4;
     vm.registers[2] = 2;
@@ -359,7 +372,7 @@ mod tests {
   #[test]
   fn test_opcode_lte() {
     let mut vm = get_test_vm();
-    vm.program = vec![14, 0, 1, 14, 0, 2, 14, 0, 3];
+    vm.program = vec![14, 0, 1, 0, 14, 0, 2, 0, 14, 0, 3];
     vm.registers[0] = 5;
     vm.registers[1] = 5;
     vm.registers[2] = 10;
