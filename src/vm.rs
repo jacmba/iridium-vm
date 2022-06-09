@@ -1,4 +1,5 @@
-use crate::instruction::Opcode;
+use super::assembler::*;
+use super::instruction::Opcode;
 
 #[derive(Debug)]
 pub struct VM {
@@ -40,6 +41,10 @@ impl VM {
 
   pub fn run(&mut self) {
     let mut running = true;
+    if !self.verify_header() {
+      println!("Invalid program header!");
+      running = false;
+    }
     while running {
       running = self.execute_instruction();
     }
@@ -52,6 +57,14 @@ impl VM {
   pub fn clear(&mut self) {
     self.program = vec![];
     self.pc = 0;
+  }
+
+  fn verify_header(&mut self) -> bool {
+    if self.program[0..4] != PIE_HEADER_PREFIX {
+      return false;
+    }
+    self.pc = 65;
+    true
   }
 
   fn next_8_bits(&mut self) -> u8 {

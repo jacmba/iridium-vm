@@ -1,3 +1,6 @@
+pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
+pub const PIE_HEADER_LENGTH: usize = 64;
+
 use super::instruction::Opcode;
 use nom::types::CompleteStr;
 
@@ -121,14 +124,29 @@ impl Assembler {
   pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {
     match program(CompleteStr(raw)) {
       Ok((_, program)) => {
+        let mut assembled_program = self.write_pie_header();
         self.process_first_phase(&program);
-        Some(self.process_second_phase(&program))
+        let mut body = self.process_second_phase(&program);
+
+        assembled_program.append(&mut body);
+        Some(assembled_program)
       }
       Err(e) => {
         println!("Error assembling code: {:?}", e);
         None
       }
     }
+  }
+
+  fn write_pie_header(&self) -> Vec<u8> {
+    let mut header = vec![];
+    for byte in PIE_HEADER_PREFIX.iter() {
+      header.push(byte.clone());
+    }
+    while header.len() < PIE_HEADER_LENGTH {
+      header.push(0 as u8);
+    }
+    header
   }
 }
 
@@ -153,6 +171,6 @@ mod tests {
     let test_string =
       "load $0 #100\nload $1 #1\nload $2 #0\ntest: inc $0\nneq $0 $2\njmpe @test\nhlt";
     let program = asm.assemble(test_string).unwrap();
-    assert_eq!(program.len(), 28);
+    assert_eq!(program.len(), 92);
   }
 }
