@@ -131,7 +131,7 @@ impl VM {
 
       // Jumps
       Opcode::JMP => {
-        self.pc = self.registers[self.next_8_bits() as usize] as usize;
+        self.pc = self.next_16_bits() as usize;
       }
       Opcode::JMPF => {
         self.pc += self.registers[self.next_8_bits() as usize] as usize;
@@ -179,7 +179,7 @@ impl VM {
       }
       Opcode::JEQ => {
         if self.equal_flag {
-          self.pc = self.registers[self.next_8_bits() as usize] as usize;
+          self.pc = self.next_16_bits() as usize;
         } else {
           self.pc += 3;
         }
@@ -283,10 +283,10 @@ mod tests {
   #[test]
   fn test_opcode_jmp() {
     let mut vm = get_test_vm();
-    vm.program = vec![6, 8, 0, 0];
+    vm.program = vec![6, 0, 8, 0];
     vm.registers[8] = 2;
     vm.run_once();
-    assert_eq!(vm.pc, 2);
+    assert_eq!(vm.pc, 8);
   }
 
   #[test]
@@ -388,11 +388,11 @@ mod tests {
   #[test]
   fn test_opcode_jeq() {
     let mut vm = get_test_vm();
-    vm.program = vec![15, 0, 0, 0];
+    vm.program = vec![15, 0, 5, 0];
     vm.equal_flag = true;
     vm.registers[0] = 3;
     vm.run_once();
-    assert_eq!(vm.pc, 3);
+    assert_eq!(vm.pc, 5);
   }
 
   #[test]
