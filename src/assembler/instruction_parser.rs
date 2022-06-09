@@ -84,6 +84,9 @@ impl AsmInstruction {
           let byte2 = converted >> 8;
           results.push(byte2 as u8);
           results.push(byte1 as u8);
+        } else {
+          println!("Symbol not found! [@{}]", name);
+          std::process::exit(1);
         }
       }
       _ => {
