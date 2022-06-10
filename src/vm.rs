@@ -63,7 +63,7 @@ impl VM {
     if self.program[0..4] != PIE_HEADER_PREFIX {
       return false;
     }
-    self.pc = 65;
+    self.pc = 64;
     true
   }
 
