@@ -9,6 +9,7 @@ pub struct VM {
   heap: Vec<u8>,
   reminder: u32,
   equal_flag: bool,
+  ro_data: Vec<u8>,
 }
 
 impl VM {
@@ -20,6 +21,7 @@ impl VM {
       heap: vec![],
       reminder: 0,
       equal_flag: false,
+      ro_data: vec![],
     }
   }
 
@@ -205,6 +207,13 @@ impl VM {
         let new_end = self.heap.len() as i32 + bytes;
         self.heap.resize(new_end as usize, 0);
         self.pc += 2;
+      }
+
+      // Display
+      Opcode::PRTS => {
+        let start_offset = self.next_16_bits() as usize;
+        let mut end_offset = start_offset;
+        //let slice = self.ro_data.
       }
 
       // Invalid code

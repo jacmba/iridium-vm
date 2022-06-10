@@ -137,6 +137,38 @@ impl AsmInstruction {
       None => None,
     }
   }
+
+  pub fn is_directive(&self) -> bool {
+    self.directive.is_some()
+  }
+
+  pub fn directive_name(&self) -> Option<String> {
+    match &self.directive {
+      Some(t) => match t {
+        Token::Directive { name } => Some(name.to_string()),
+        _ => None,
+      },
+      None => None,
+    }
+  }
+
+  pub fn is_opcode(&self) -> bool {
+    self.opcode.is_some()
+  }
+
+  pub fn has_operands(&self) -> bool {
+    self.operand1.is_some() || self.operand2.is_some() || self.operand3.is_some()
+  }
+
+  pub fn get_string_constant(&self) -> Option<String> {
+    match &self.operand1 {
+      Some(d) => match d {
+        Token::Directive { name } => Some(name.to_string()),
+        _ => None,
+      },
+      None => None,
+    }
+  }
 }
 
 #[cfg(test)]
